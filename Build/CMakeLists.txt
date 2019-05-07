@@ -5,8 +5,13 @@ add_subdirectory(../NetworkEvents/Builds NetworkEvents)
 
 #on windows, copy the dlls when installing
 if (MSVC)
-	#change this if the base GUI code is located somewhere else
-	set(GUI_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../plugin-GUI)
+	if (NOT DEFINED GUI_BASE_DIR)
+		if (DEFINED ENV{GUI_BASE_DIR})
+			set(GUI_BASE_DIR $ENV{GUI_BASE_DIR})
+		else()
+			set(GUI_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../plugin-GUI)
+		endif()
+	endif()
 
 	set(GUI_BIN_DIR ${GUI_BASE_DIR}/Builds/VisualStudio2013)
 	if (CMAKE_SIZEOF_VOID_P EQUAL 8)
