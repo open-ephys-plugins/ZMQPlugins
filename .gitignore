@@ -1,0 +1,17 @@
+# Files and folders to ignore
+
+# 1. intermediate files
+*.o
+*.d
+
+
+# 2. Build files related
+
+**/Builds/*
+Build/*
+!**/CMakeLists.txt
+!**/CMAKE_README.txt
+
+
+# 3. other
+**/.DS_Store
