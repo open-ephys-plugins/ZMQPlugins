@@ -38,12 +38,13 @@ const int MAX_MESSAGE_LENGTH = 64000;
 NetworkEvents::NetworkEvents()
     : GenericProcessor  ("Network Events")
     , Thread            ("NetworkThread")
-    , makeNewSocket     (true)
-    , requestedPort     (5556)
+    , makeNewSocket     (false)
     , boundPort         (0)
 {
     setProcessorType (PROCESSOR_TYPE_SOURCE);
 
+    // async so that any lingering instances will be destroyed first
+    setNewListeningPort(5556, false);
     startThread();
 
     sendSampleCount = false; // disable updating the continuous buffer sample counts,
@@ -51,10 +52,18 @@ NetworkEvents::NetworkEvents()
 }
 
 
-void NetworkEvents::setNewListeningPort(uint16 port)
+void NetworkEvents::setNewListeningPort(uint16 port, bool synchronous)
 {
     requestedPort = port;
-    makeNewSocket = true;
+
+    if (synchronous)
+    {
+        makeNewSocket = true;
+    }
+    else
+    {
+        triggerAsyncUpdate();
+    }
 }
 
 
@@ -107,6 +116,12 @@ AudioProcessorEditor* NetworkEvents::createEditor ()
     editor = new NetworkEventsEditor (this, true);
 
     return editor;
+}
+
+
+void NetworkEvents::handleAsyncUpdate()
+{
+    makeNewSocket = true;
 }
 
 
@@ -437,7 +452,8 @@ void NetworkEvents::loadCustomParametersFromXml()
                 auto port = static_cast<uint16>(mainNode->getIntAttribute("port"));
                 if (port != 0)
                 {
-                    setNewListeningPort(port);
+                    // async so that any lingering instances will be destroyed first
+                    setNewListeningPort(port, false);
                 }
             }
         }
