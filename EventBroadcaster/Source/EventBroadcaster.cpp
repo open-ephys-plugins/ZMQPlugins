@@ -124,12 +124,8 @@ EventBroadcaster::EventBroadcaster()
 {
     setProcessorType (PROCESSOR_TYPE_SINK);
 
-    int portToTry = 5557;
-    while (setListeningPort(portToTry) == EADDRINUSE)
-    {
-        // try the next port, looking for one not in use
-        portToTry++;
-    }
+    // set port to 5557; search for an available one if necessary; and do it asynchronously.
+    setListeningPort(5557, false, true, false);
 }
 
 
@@ -150,8 +146,20 @@ int EventBroadcaster::getListeningPort() const
 }
 
 
-int EventBroadcaster::setListeningPort(int port, bool forceRestart)
+int EventBroadcaster::setListeningPort(int port, bool forceRestart, bool searchForPort, bool synchronous)
 {
+    if (!synchronous)
+    {
+        const MessageManagerLock mmLock; // since the callback happens in the message thread
+
+        asyncPort = port;
+        asyncForceRestart = forceRestart;
+        asyncSearchForPort = searchForPort;
+
+        triggerAsyncUpdate();
+        return 0;
+    }
+
     int status = 0;
     //int currPort = getListeningPort();
     if ((listeningPort != port) || forceRestart)
@@ -172,9 +180,24 @@ int EventBroadcaster::setListeningPort(int port, bool forceRestart)
         }
         else
         {
-            if (0 != newSocket->bind(port))
+            if (searchForPort) // look for an unused port
+            {
+                while (0 != newSocket->bind(port) && zmq_errno() == EADDRINUSE)
+                {
+                    ++port;
+                }
+                if (newSocket->getBoundPort() != port)
+                {
+                    status = zmq_errno();
+                }
+            }
+            else if (0 != newSocket->bind(port))
             {
                 status = zmq_errno();
+            }
+
+            if (status != 0)
+            {
                 std::cout << "Failed to bind to port " << port << ": "
                     << zmq_strerror(status) << std::endl;
             }
@@ -480,7 +503,8 @@ void EventBroadcaster::loadCustomParametersFromXml()
         {
             if (mainNode->hasTagName("EVENTBROADCASTER"))
             {
-                setListeningPort(mainNode->getIntAttribute("port", listeningPort));
+                // overrides an existing async call to setListeningPort, if any
+                setListeningPort(mainNode->getIntAttribute("port", listeningPort), false, false, false);
 
                 outputFormat = mainNode->getIntAttribute("format", outputFormat);
                 auto ed = static_cast<EventBroadcasterEditor*>(getEditor());
@@ -557,4 +581,12 @@ EventBroadcaster::DataToVarFcn EventBroadcaster::getDataReader(BaseType dataType
     }
     jassertfalse;
     return nullptr;
+}
+
+void EventBroadcaster::handleAsyncUpdate()
+{
+    // should already be in the message thread, but just in case:
+    const MessageManagerLock mmlock;
+
+    setListeningPort(asyncPort, asyncForceRestart, asyncSearchForPort);
 }

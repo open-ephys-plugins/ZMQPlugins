@@ -23,6 +23,7 @@
 #endif
 
 class EventBroadcaster : public GenericProcessor
+                       , private AsyncUpdater
 {
 public:
     // ids for format combobox
@@ -34,7 +35,7 @@ public:
 
     int getListeningPort() const;
     // returns 0 on success, else the errno value for the error that occurred.
-    int setListeningPort(int port, bool forceRestart = false);
+    int setListeningPort(int port, bool forceRestart = false, bool searchForPort = false, bool synchronous = true);
 
     int getOutputFormat() const;
     void setOutputFormat(int format);
@@ -92,6 +93,8 @@ private:
     static void populateMetaData(const MetaDataEventObject* channel,
         const EventBasePtr event, DynamicObject::Ptr dest);
 
+    void handleAsyncUpdate() override; // to change port asynchronously
+
     static String getEndpoint(int port);
 
     // called from setListeningPort() depending on success/failure of ZMQ operations
@@ -118,6 +121,11 @@ private:
     static var stringValueToVar(const void* value, unsigned int dataLength);
 
     static DataToVarFcn getDataReader(BaseType dataType);
+
+    // for setting port asynchronously
+    int asyncPort;
+    bool asyncForceRestart;
+    bool asyncSearchForPort;
 };
 
 
