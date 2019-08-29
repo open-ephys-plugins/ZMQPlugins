@@ -92,8 +92,7 @@ void NetworkEvents::restartConnection()
 
 void NetworkEvents::createEventChannels()
 {
-    float sampleRate = CoreServices::getGlobalSampleRate();
-    EventChannel* chan = new EventChannel(EventChannel::TEXT, 1, MAX_MESSAGE_LENGTH, sampleRate, this);
+    EventChannel* chan = new EventChannel(EventChannel::TEXT, 1, MAX_MESSAGE_LENGTH, 0, this);
 	chan->setName("Network messages");
 	chan->setDescription("Messages received through the network events module");
 	chan->setIdentifier("external.network.rawData");
@@ -102,20 +101,10 @@ void NetworkEvents::createEventChannels()
 	eventChannelArray.add(chan);
 	messageChannel = chan;
 
-    EventChannel* TTLchan = new EventChannel(EventChannel::TTL, 8, 1, sampleRate, this);
+    EventChannel* TTLchan = new EventChannel(EventChannel::TTL, 8, 1, 0, this);
     TTLchan->setName("Network Events output");
     TTLchan->setDescription("Triggers whenever \"TTL\" is received on the port.");
     TTLchan->setIdentifier("external.network.ttl");
-
-    // begin hack to show events in LFP viewer
-    MetaDataDescriptor md(MetaDataDescriptor::UINT16, 3, "Source Channel",
-        "Index at its source, source processor ID and subprocessor index of the channel that triggers this event", "source.channel.identifier.full");
-    MetaDataValue mv(md);
-    const uint16 sourceInfo[3] = { 0, 0, 0 };
-    mv.setValue(sourceInfo);
-    TTLchan->addMetaData(md, mv);
-    // end hack to show event in LFP viewer
-
     eventChannelArray.add(TTLchan);
     TTLChannel = TTLchan;
 }
