@@ -92,7 +92,7 @@ void NetworkEvents::restartConnection()
 
 void NetworkEvents::createEventChannels()
 {
-    EventChannel* chan = new EventChannel(EventChannel::TEXT, 1, MAX_MESSAGE_LENGTH, 0, this);
+    EventChannel* chan = new EventChannel(EventChannel::TEXT, 1, MAX_MESSAGE_LENGTH, 0.0f, this);
 	chan->setName("Network messages");
 	chan->setDescription("Messages received through the network events module");
 	chan->setIdentifier("external.network.rawData");
@@ -101,7 +101,7 @@ void NetworkEvents::createEventChannels()
 	eventChannelArray.add(chan);
 	messageChannel = chan;
 
-    EventChannel* TTLchan = new EventChannel(EventChannel::TTL, 8, 1, 0, this);
+    EventChannel* TTLchan = new EventChannel(EventChannel::TTL, 8, 1, 0.0f, this);
     TTLchan->setName("Network Events output");
     TTLchan->setDescription("Triggers whenever \"TTL\" is received on the port.");
     TTLchan->setIdentifier("external.network.ttl");
