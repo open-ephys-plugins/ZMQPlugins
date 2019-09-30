@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5.0)
 project(OE_ZMQ)
 add_subdirectory(EventBroadcaster)
 add_subdirectory(NetworkEvents)
+add_subdirectory(ZMQInterface)
 
 #on windows, copy the dlls when installing
 if (MSVC)
