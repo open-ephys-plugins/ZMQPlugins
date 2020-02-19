@@ -353,7 +353,7 @@ void ZmqInterface::run()
     "param_name1": param_value1,
     "param_name2": param_value2,
   }
-  "dataSize": size (if size > 0 it's the size of binary data coming in in the next frame (multi-part message)
+  "data_size": size (if size > 0 it's the size of binary data coming in in the next frame (multi-part message)
  }
  
  and then a possible data packet
@@ -380,7 +380,7 @@ int ZmqInterface::sendData(float *data, int nChannels, int nSamples, int nRealSa
     c_obj->setProperty("timestamp", timestamp);
 
     obj->setProperty("content", var(c_obj));
-    obj->setProperty("dataSize", (int)(nChannels * nSamples * sizeof(float)));
+    obj->setProperty("data_size", (int)(nChannels * nSamples * sizeof(float)));
     
     var json(obj);
     
