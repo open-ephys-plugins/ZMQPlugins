@@ -329,27 +329,31 @@ void ZmqInterface::run()
 
 /* format for passing data
  JSON
- { "messageNo": number,
- "type": "data"|"event"|"parameter",
- "content":
- (for data)
- { "nChannels": nChannels,
- "nSamples": nSamples
- }
- (for event)
- {
- "eventType": number,
- "sampleNum": sampleNum (number),
- "eventId": id (number),
- "eventChannel": channel (number),
- }
- (for parameter)
- {
- "param_name1": param_value1,
- "param_name2": param_value2,
- ...
- }
- "dataSize": size (if size > 0 it's the size of binary data coming in in the next frame (multi-part message)
+ { 
+  "message_no": number,
+  "type": "data"|"event"|"parameter",
+  "content":
+  (for data)
+  {
+    "n_channels": nChannels,
+    "n_samples": nSamples,
+    "n_real_samples": nRealSamples,
+    "timestamp": sample id (number)
+  }
+  (for event)
+  {
+    "type": number,
+    "sample_num": sampleNum (number),
+    "event_id": id (number),
+    "event_channel": channel (number),
+    "timestamp": sample id (number)
+  }
+  (for parameter) // todo
+  {
+    "param_name1": param_value1,
+    "param_name2": param_value2,
+  }
+  "dataSize": size (if size > 0 it's the size of binary data coming in in the next frame (multi-part message)
  }
  
  and then a possible data packet
