@@ -315,6 +315,7 @@ void ZmqInterface::run()
     "n_channels": nChannels,
     "n_samples": nSamples,
     "n_real_samples": nRealSamples,
+    "sample_rate": (integer) sampling rate of first channel,
     "timestamp": sample id (number)
   }
   (for event)
@@ -337,7 +338,8 @@ void ZmqInterface::run()
  */
 
 
-int ZmqInterface::sendData(float *data, int nChannels, int nSamples, int nRealSamples, int64 timestamp)
+int ZmqInterface::sendData(float *data, int nChannels, int nSamples, int nRealSamples, 
+                           int64 timestamp, int sampleRate)
 {
     
     messageNumber++;
@@ -355,6 +357,7 @@ int ZmqInterface::sendData(float *data, int nChannels, int nSamples, int nRealSa
     c_obj->setProperty("n_samples", nSamples);
     c_obj->setProperty("n_real_samples", nRealSamples);
     c_obj->setProperty("timestamp", timestamp);
+    c_obj->setProperty("sample_rate", sampleRate);
 
     obj->setProperty("content", var(c_obj));
     obj->setProperty("data_size", (int)(nChannels * nSamples * sizeof(float)));
@@ -721,7 +724,6 @@ int ZmqInterface::receiveEvents(MidiBuffer& events)
     
         }
 
-
         if (ed.isEvent) {
             std::cout << "ZMQ event received\n";
         }
@@ -729,7 +731,6 @@ int ZmqInterface::receiveEvents(MidiBuffer& events)
         if (ed.isEvent) {
             addEvent(events, ed.type, ed.sampleNum, ed.eventId, ed.eventChannel, ed.numBytes, NULL, false);
         }
-
 
         //void addEvent(int channelIndex, const Event* event, int sampleNum);
         //void addEvent(const EventChannel* channel, const Event* event, int sampleNum);
@@ -754,7 +755,6 @@ void ZmqInterface::checkForApplications()
             zed->refreshListAsync();
         }
     }
-
 }
 
 void ZmqInterface::process(AudioSampleBuffer& buffer)
@@ -770,14 +770,26 @@ void ZmqInterface::process(AudioSampleBuffer& buffer)
     // current timestamp is at the end of the buffer; we want to send the timestamp of the first sample instead
     uint64_t firstTs = getTimestamp(0) - getNumSamples(0);
 
+    float sampleRate;
+
+    // Simplified sample rate detection (could check channel type or report
+    // sampling rate of all channels separately in case they differ)
+    if (dataChannelArray.size() > 0) 
+    {
+        sampleRate = dataChannelArray[0]->getSampleRate();
+    }
+    else 
+    {   // this should never run - if no data channels, then no data...
+        sampleRate = CoreServices::getGlobalSampleRate();
+    }
+
     sendData(*(buffer.getArrayOfWritePointers()), buffer.getNumChannels(), 
-        buffer.getNumSamples(), getNumSamples(0), firstTs);
+        buffer.getNumSamples(), getNumSamples(0), firstTs, (int)sampleRate);
 
 #if 0
     receiveEvents(events);
 #endif
     checkForApplications();
-    
 }
 
 void ZmqInterface::updateSettings()
